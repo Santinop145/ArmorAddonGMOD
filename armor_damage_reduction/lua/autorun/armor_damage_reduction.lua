@@ -67,6 +67,7 @@ if SERVER then
         end
     end
     -- Add the function to the EntityTakeDamage hook so it is called whenever an entity takes damage.
+    local MorphineCooldown = true
     local function MorphineShot(ent, dmg)
         -- Check if targeted entity is a player and if damage is above 10.
         if(ent:IsPlayer() and dmg:GetDamage > 10) then
@@ -78,19 +79,18 @@ if SERVER then
             local HealthPercentage = CurrentHealth / CurrentMaxHealth
             -- Define the amount of health morphine will give, the time delay and the cooldown variable
             local MorphineHealthAmount = 0
-            local Delay = 10
-            local MorphineCooldown = CurTime()
 
             --[[ Check if player has less than 50% health. If true, check if MorphineCooldown is above the server's current time.
             If true, set the Morphine health amount as an overly complicated formula for no reason at all because I wanted to have a funny number
             as a healing value. Why not?
             Afterwards, add the morphine's health amount to the player's health.
             Change the cooldown]]
-            if(HealthPercentage < 0.5 && MorphineCooldown => CurTime()) then
+            if(HealthPercentage < 0.5 && MorphineCooldown) then
                 MorphineHealthAmount = CurrentHealth + (CurrentHealth / (HealthPercentage * (HealthPercentage + 1.5)))
                 ply:Health() = CurrentHealth + MorphineHealthAmount
                 ply:EmitSound("HL1/fvox/morphine_shot.wav", 100, 100, 1, CHAN_AUTO)
-                MorphineCooldown = CurTime() + Delay
+                MorphineCooldown = false
+                timer.Simple(10, function() MorphineCooldown = true end )
             end
         end
     end
