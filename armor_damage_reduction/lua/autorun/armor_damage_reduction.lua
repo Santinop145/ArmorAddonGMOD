@@ -70,7 +70,7 @@ if SERVER then
     local MorphineCooldown = true
     local function MorphineShot(ent, dmg)
         -- Check if targeted entity is a player and if damage is above 10.
-        if(ent:IsPlayer() and dmg:GetDamage > 10) then
+        if(ent:IsPlayer() and dmg:GetDamage() > 10) then
             -- Define entity as a player variable.
             ply = ent
             -- Get health and max health to create a percentage
@@ -85,9 +85,10 @@ if SERVER then
             as a healing value. Why not?
             Afterwards, add the morphine's health amount to the player's health.
             Change the cooldown]]
-            if(HealthPercentage < 0.5 && MorphineCooldown) then
-                MorphineHealthAmount = CurrentHealth + (CurrentHealth / (HealthPercentage * (HealthPercentage + 1.5)))
-                ply:Health() = CurrentHealth + MorphineHealthAmount
+            if(HealthPercentage < 0.5 and MorphineCooldown) then
+                MorphineHealthAmount = CurrentHealth * (HealthPercentage + 1)
+                ply:SetHealth(MorphineHealthAmount)
+                ply:EmitSound("items/medshot4.wav", 80, 100, 1, CHAN_AUTO)
                 ply:EmitSound("HL1/fvox/morphine_shot.wav", 100, 100, 1, CHAN_AUTO)
                 MorphineCooldown = false
                 timer.Simple(10, function() MorphineCooldown = true end )
