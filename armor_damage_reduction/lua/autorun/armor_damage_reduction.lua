@@ -1,135 +1,194 @@
 if SERVER then
-    -- Define the main function and take ent and dmg from the hook.
+    -- Initializes addon
+    timer.Create("AddonStartup", 7, 0, function() 
+        -- Gets the data of all connected players
+        Players = player.GetHumans()
+        -- Creates a table of cooldowns of armor for each player
+        SurgeCooldowns = {}
+        -- Creates a table of cooldowns of morphine for each player
+        MorphineCooldowns = {}
+        -- Creates a table with the amount of morphine for each player
+        MorphineAmount = {}
+        -- Creates a for loop to assign default values to all playes on their respective tables
+        for i=1, game.MaxPlayers() do
+            SurgeCooldowns[i] = true
+            MorphineCooldowns[i] = true
+            MorphineAmount[i] = 3
+        end
+        print("Santinop's addon started!")
+        timer.Remove("AddonStartup")
+    end)
+    -- Define the main function and take ent and dmg from the hook
     local function ArmorReduceDamage(ent, dmg)
     -- Check if targeted entity is a player, then check if it received more than 0 damage.
-        if(ent:IsPlayer() and dmg:GetDamage() > 0) then
-            -- Define the targeted entity as a player variable.
-            ply = ent
-            -- Get current armor.
-            local CurrentArmor = ply:Armor()
-            -- Get current max armor.
-            local CurrentMaxArmor = ply:GetMaxArmor()
-            -- Get current armor percentage.
-            local ArmorPercentage = CurrentArmor / CurrentMaxArmor
+        if(ent:IsPlayer() and dmg:GetDamage() > 0 and ent:Alive()) then
+            -- Obtains players again (just in case.)
+            Players = player.GetHumans()
+            -- Creates a for loop to run the individual code on each player
+            for i=1, table.Count(Players) do
+                if(ent == Players[i]) then
+                    local ply = Players[i]
+                    -- Define the targeted entity as a player variable.
+                    local effectdata = EffectData()
+                    -- Get player position and define it as the effectdata tag value
+                    effectdata:SetOrigin(ply:GetPos())
+                    -- Define the entity to utilize as the player
+                    effectdata:SetEntity(ply)
+                    -- Get current armor.
+                    local CurrentArmor = ply:Armor()
+                    -- Get current max armor.
+                    local CurrentMaxArmor = ply:GetMaxArmor()
+                    -- Get current armor percentage.
+                    local MaxArmorPercentage = CurrentMaxArmor / 100
+                    local ArmorPercentage = CurrentArmor / CurrentMaxArmor
+                    local DamageReduction = MaxArmorPercentage - ArmorPercentage + 0.3
 
-            -- Apply global damage reduction.
-            if(ArmorPercentage > 0) then
-                dmg:ScaleDamage(0.8)
-            end
+                    -- Create a timer to check if player is dead, then reset cooldown if true
+                    timer.Simple(0.5, function()
+                        if(not ply:Alive())then
+                            SurgeCooldowns[i] = true
+                        end
+                    end)
+                    
+                    -- If chunk to add effects and sounds
+                    if(ArmorPercentage > MaxArmorPercentage) then
+                        dmg:ScaleDamage(0.2)
+                        ply:EmitSound("weapons/crossbow/hit1.wav", 35, 20, 1, CHAN_AUTO) 
+                        ply:EmitSound("weapons/crowbar/crowbar_impact1.wav", 20, 40, 1, CHAN_AUTO) 
+                        ply:EmitSound("weapons/fx/rics/ric3.wav", 35, 110, 1, CHAN_AUTO) 
+                        ply:EmitSound("weapons/stunstick/spark3.wav", 60, 80, 1, CHAN_AUTO) 
+                        ply:EmitSound("weapons/stunstick/stunstick_impact1.wav", 40, 75, 1, CHAN_AUTO) 
+                        util.Effect("ManhackSparks", effectdata)
+                        util.Effect("StunstickImpact", effectdata)
+                    elseif(ArmorPercentage > MaxArmorPercentage * 0.3) then
+                        dmg:ScaleDamage(DamageReduction)
+                        ply:EmitSound("weapons/crossbow/hit1.wav", 35, 20, 1, CHAN_AUTO) 
+                        ply:EmitSound("weapons/crowbar/crowbar_impact1.wav", 20, 40, 1, CHAN_AUTO) 
+                        ply:EmitSound("weapons/fx/rics/ric3.wav", 35, 110, 1, CHAN_AUTO) 
+                        ply:EmitSound("weapons/stunstick/spark3.wav", 60, 80, 1, CHAN_AUTO) 
+                        ply:EmitSound("weapons/stunstick/stunstick_impact1.wav", 40, 75, 1, CHAN_AUTO) 
+                        util.Effect("ManhackSparks", effectdata)
+                        util.Effect("StunstickImpact", effectdata)
+                    elseif(ArmorPercentage <= MaxArmorPercentage * 0.3) then
+                        dmg:ScaleDamage(1)
+                        ply:EmitSound("weapons/crossbow/hit1.wav", 35, 25, 1, CHAN_AUTO) 
+                        ply:EmitSound("weapons/crowbar/crowbar_impact1.wav", 20, 45, 1, CHAN_AUTO) 
+                        ply:EmitSound("weapons/fx/rics/ric3.wav", 35, 110, 1, CHAN_AUTO) 
+                    end
 
-            --[[
-            Apply reduction to damage after certain percentages. Default: 
-            75% damage reduction when above 75 armor
-            50% damage reduction when above 50 armor
-            25% damage reduction when above 25 armor
-            20% damage reduction overall (applies before armor reduction)
-            Also apply sound effects on player damage to give a sound cue to damage reduction.
-            --]]
+                    -- Check if the player has armor, and if it's below the max armor, then add 1 armor point on damage.
+                    if(CurrentArmor > 0 and CurrentArmor < CurrentMaxArmor) then
+                        ply:SetArmor(CurrentArmor + 1)
+                        ply:EmitSound("player/pl_burnpain1.wav", 35, 130, 1, CHAN_AUTO)
+                    end
 
-
-            if(ArmorPercentage >= 0.75) then
-                dmg:ScaleDamage(0.6)
-                ply:EmitSound("weapons/crossbow/hit1.wav", 35, 20, 1, CHAN_AUTO) 
-                ply:EmitSound("weapons/crowbar/crowbar_impact1.wav", 20, 40, 1, CHAN_AUTO) 
-                ply:EmitSound("weapons/fx/rics/ric3.wav", 35, 110, 1, CHAN_AUTO) 
-                ply:EmitSound("weapons/stunstick/spark3.wav", 60, 80, 1, CHAN_AUTO) 
-                ply:EmitSound("weapons/stunstick/stunstick_impact1.wav", 40, 75, 1, CHAN_AUTO) 
-            elseif(ArmorPercentage >= 0.5) then
-                dmg:ScaleDamage(0.7)
-                ply:EmitSound("weapons/crossbow/hit1.wav", 35, 25, 1, CHAN_AUTO) 
-                ply:EmitSound("weapons/crowbar/crowbar_impact1.wav", 20, 45, 1, CHAN_AUTO) 
-                ply:EmitSound("weapons/fx/rics/ric3.wav", 35, 110, 1, CHAN_AUTO) 
-                ply:EmitSound("weapons/stunstick/spark3.wav", 50, 80, 1, CHAN_AUTO) 
-                ply:EmitSound("weapons/stunstick/stunstick_impact1.wav", 35, 75, 1, CHAN_AUTO) 
-            elseif(ArmorPercentage >= 0.25) then
-                dmg:ScaleDamage(0.8)
-                ply:EmitSound("weapons/crossbow/hit1.wav", 35, 25, 1, CHAN_AUTO) 
-                ply:EmitSound("weapons/crowbar/crowbar_impact1.wav", 20, 45, 1, CHAN_AUTO) 
-                ply:EmitSound("weapons/fx/rics/ric3.wav", 35, 110, 1, CHAN_AUTO) 
-                ply:EmitSound("weapons/stunstick/spark3.wav", 40, 80, 1, CHAN_AUTO) 
-                ply:EmitSound("weapons/stunstick/stunstick_impact1.wav", 30, 70, 1, CHAN_AUTO) 
-            elseif(ArmorPercentage > 0) then
-                dmg:ScaleDamage(0.9)
-                ply:EmitSound("weapons/crossbow/hit1.wav", 35, 25, 1, CHAN_AUTO) 
-                ply:EmitSound("weapons/crowbar/crowbar_impact1.wav", 20, 45, 1, CHAN_AUTO) 
-                ply:EmitSound("weapons/fx/rics/ric3.wav", 35, 110, 1, CHAN_AUTO) 
-                ply:EmitSound("weapons/stunstick/spark3.wav", 30, 80, 1, CHAN_AUTO) 
-                ply:EmitSound("weapons/stunstick/stunstick_impact1.wav", 20, 70, 1, CHAN_AUTO) 
-            elseif(ArmorPercentage == 0) then
-                dmg:ScaleDamage(1)
-                ply:EmitSound("weapons/crossbow/hit1.wav", 35, 25, 1, CHAN_AUTO) 
-                ply:EmitSound("weapons/crowbar/crowbar_impact1.wav", 20, 45, 1, CHAN_AUTO) 
-                ply:EmitSound("weapons/fx/rics/ric3.wav", 35, 110, 1, CHAN_AUTO) 
-            end
-
-            -- Check if the player has armor, and if it's below the max armor, then add 1 armor point on damage.
-            -- If player's health is below 50, whenever receiving damage, add 1 health point and add a sound cue.
-            if(CurrentArmor > 0 and CurrentArmor < CurrentMaxArmor) then
-                ply:SetArmor(CurrentArmor + 1)
-                ply:EmitSound("player/pl_burnpain1.wav", 35, 130, 1, CHAN_AUTO)
+                    -- Create the armor surge code
+                    if(SurgeCooldowns[i] and ArmorPercentage <= MaxArmorPercentage * 0.75 and ArmorPercentage > 0)then
+                        ply:SetArmor(CurrentArmor + 5)
+                        SurgeCooldowns[i] = false
+                        ply:ScreenFade(SCREENFADE.IN, Color( 0, 120, 120, 20), 0.5, 0.8)
+                        ply:EmitSound("HL1/fvox/power_restored.wav", 100, 100, 1, CHAN_AUTO)
+                        util.Effect("VortDispel", effectdata)
+                        timer.Create(i, 0.05, 40, function() if(ply:Armor() < 100)then CurrentArmor = ply:Armor() ply:SetArmor(CurrentArmor + 1) end end)
+                        timer.Simple(20, function() SurgeCooldowns[i] = true if(ply:Alive()) then ply:PrintMessage(HUD_PRINTTALK, "Armor surge ready!") end end)
+                    end
+                end
             end
         end
     end
-    -- Add the function to the EntityTakeDamage hook so it is called whenever an entity takes damage.
-    local MorphineCooldown = true
     local function MorphineShot(ent, dmg)
         -- Check if targeted entity is a player and if damage is above 10.
-        if(ent:IsPlayer() and dmg:GetDamage() > 5) then
-            -- Define entity as a player variable.
-            ply = ent
-            -- Get health and max health to create a percentage
-            local CurrentHealth = ply:Health()
-            local CurrentMaxHealth = ply:GetMaxHealth()
-            local HealthPercentage = CurrentHealth / CurrentMaxHealth
-            -- Define the amount of health morphine will give, the time delay and the cooldown variable
-            local MorphineHealthAmount = 0
-
-            --[[ Check if player has less than 50% health. If true, check if MorphineCooldown is above the server's current time.
-            If true, set the Morphine health amount as an overly complicated formula for no reason at all because I wanted to have a funny number
-            as a healing value. Why not?
-            Afterwards, add the morphine's health amount to the player's health.
-            Change the cooldown
-            Add a timer that increases health in a fancy way]]
-            if(HealthPercentage <= 0.5 and MorphineCooldown) then
-                ply:EmitSound("HL1/fvox/automedic_on.wav", 60, 100, 1, CHAN_AUTO) 
-                timer.Simple(3.5, function() 
-                        if(ply:Health() ~= 100 and ply:Health() ~= 0)then
-                            MorphineHealthAmount = CurrentHealth * (HealthPercentage + 1)
-                            ply:EmitSound("items/medshot4.wav", 80, 100, 1, CHAN_AUTO)
-                            ply:EmitSound("HL1/fvox/morphine_shot.wav", 60, 100, 1, CHAN_AUTO) 
-                            ply:SetHealth(MorphineHealthAmount)
-                            timer.Simple(2, function()
-                                ply:EmitSound("hl1/fvox/boop.wav", 80, 100, 1, CHAN_AUTO)
-                                ply:EmitSound("hl1/fvox/wound_sterilized.wav", 80, 100, 1, CHAN_AUTO)
-                                end
-                            )
-                            timer.Simple(4, function()
-                                ply:EmitSound("hl1/fvox/blip.wav", 60, 100, 1, CHAN_AUTO)
-                                ply:EmitSound("hl1/fvox/medical_repaired.wav", 60, 100, 1, CHAN_AUTO)
-                                end
-                            )
-                            timer.Create("HealOverTime", 0.5, 10, function() CurrentHealth = ply:Health() ply:SetHealth(CurrentHealth + 1) end)
-                        else 
-                            ply:EmitSound("hl1/fvox/fuzz.wav", 60, 100, 1, CHAN_AUTO)
-                            ply:EmitSound("hl1/fvox/internal_bleeding.wav", 60, 100, 1, CHAN_AUTO)
-                            timer.Simple(2.5, function()
-                                ply:EmitSound("hl1/fvox/beep.wav", 60, 100, 1, CHAN_AUTO)
-                                ply:EmitSound("hl1/fvox/innsuficient_medical.wav", 60, 100, 1, CHAN_AUTO)
-                                end
-                            )
-                            timer.Simple(7, function()
-                                ply:EmitSound("hl1/fvox/boop.wav", 60, 100, 1, CHAN_AUTO)
-                                ply:EmitSound("hl1/fvox/hev_general_fail.wav", 60, 100, 1, CHAN_AUTO)
-                                end
-                            )
+        if(ent:IsPlayer() and dmg:GetDamage() > 4 and ent:Alive()) then
+            -- Get player table again
+            Players = player.GetHumans()
+            -- Create a for loop to run the individual code on each player
+            for i=1, table.Count(Players) do
+                if(ent == Players[i]) then
+                    local ply = Players[i]
+                    -- Get health and max health to create a percentage
+                    local HealthPercentage = ply:Health() / ply:GetMaxHealth()
+                    -- Define the amount of health morphine will give, the time delay and the cooldown variable
+                    local MorphineHealthAmount = 0
+                    -- Run a timer to check if player is dead, if true, reset cooldown
+                    timer.Simple(0.5, function()
+                        if(not ply:Alive())then
+                            MorphineCooldowns[i] = true
+                            MorphineAmount[i] = 3
                         end
+                    end)
+                
+                    -- Run morphine code
+                    if(HealthPercentage <= 0.55 and MorphineCooldowns[i]) then
+                        ply:EmitSound("HL1/fvox/automedic_on.wav", 60, 100, 1, CHAN_AUTO) 
+                        timer.Simple(3.5, function() 
+                                if(ply:Health() ~= ply:GetMaxHealth() and ply:Health() ~= 0 and ply:Alive() and MorphineAmount[i] > 0)then
+                                    MorphineHealthAmount = ply:Health() + 80
+                                    ply:EmitSound("items/medshot4.wav", 80, 100, 1, CHAN_AUTO)
+                                    ply:EmitSound("HL1/fvox/morphine_shot.wav", 60, 100, 1, CHAN_AUTO)
+                                    MorphineAmount[i] = MorphineAmount[i] - 1
+                                    ply:PrintMessage(HUD_PRINTTALK, "Morphine shot applied! Morphine shots left: " .. MorphineAmount[i])
+                                    ply:ScreenFade(SCREENFADE.IN, Color( 120, 255, 120, 128), 0.8, 0.1)
+                                    ply:SetHealth(MorphineHealthAmount)
+                                    if(ply:Alive())then
+                                        timer.Simple(2, function()
+                                                if(ply:Alive())then
+                                                ply:EmitSound("hl1/fvox/boop.wav", 80, 100, 1, CHAN_AUTO)
+                                                ply:EmitSound("hl1/fvox/wound_sterilized.wav", 80, 100, 1, CHAN_AUTO)
+                                                end
+                                            end
+                                        )
+                                    end
+                                    if(ply:Alive())then
+                                        timer.Simple(4, function()
+                                            if(ply:Alive())then
+                                            ply:EmitSound("hl1/fvox/blip.wav", 60, 100, 1, CHAN_AUTO)
+                                            ply:ScreenFade(SCREENFADE.IN, Color( 120, 255, 120, 60), 0.2, 0)
+                                            ply:EmitSound("hl1/fvox/medical_repaired.wav", 60, 100, 1, CHAN_AUTO)
+                                            end
+                                        end
+                                    )
+                                    end
+                                    if(not timer.Exists("TemporaryHealth")) then
+                                        timer.Create("TemporaryHealth", 0.4, 60, function() if(ply:Health() > 0) then ply:SetHealth(ply:Health()-1) else ply:Kill() timer.Remove("TemporaryHealth") MorphineAmount[i] = 3 end end)
+                                    else 
+                                        timer.Adjust("TemporaryHealth", 0.3)
+                                    end
+                                elseif(MorphineAmount[i] > 0) then
+                                    ply:EmitSound("hl1/fvox/fuzz.wav", 60, 100, 1, CHAN_AUTO)
+                                    ply:EmitSound("hl1/fvox/internal_bleeding.wav", 60, 100, 1, CHAN_AUTO)
+                                    timer.Simple(2.5, function()
+                                        ply:EmitSound("hl1/fvox/beep.wav", 60, 100, 1, CHAN_AUTO)
+                                        ply:EmitSound("hl1/fvox/innsuficient_medical.wav", 60, 100, 1, CHAN_AUTO)
+                                        end
+                                    )
+                                    timer.Simple(7, function()
+                                        ply:EmitSound("hl1/fvox/boop.wav", 60, 100, 1, CHAN_AUTO)
+                                        ply:EmitSound("hl1/fvox/hev_general_fail.wav", 60, 100, 1, CHAN_AUTO)
+                                        end
+                                    )
+                                else
+                                    ply:EmitSound("hl1/fvox/beep.wav", 60, 100, 1, CHAN_AUTO)
+                                    ply:EmitSound("hl1/fvox/innsuficient_medical.wav", 60, 100, 1, CHAN_AUTO)
+                                end
+                            end
+                        )
+                        MorphineCooldowns[i] = false
+                        timer.Simple(20, function() MorphineCooldowns[i] = true if(MorphineAmount[i] > 0 and ply:Alive()) then ply:PrintMessage(HUD_PRINTTALK, "Morphine shot ready!") end end)
                     end
-                )
-                MorphineCooldown = false
-                timer.Simple(20, function() MorphineCooldown = true end)
+                end
             end
         end
+    end
+    local function MorphineRefill(player, item)
+        for i=1, table.Count(Players) do
+            if(player:Health() < player:GetMaxHealth() and IsValid(item) and item:GetClass() == "item_healthkit" and player == Players[i] and MorphineAmount[i] < 3 or item:GetClass() == "hl1_item_healthkit" and player == Players[i] and MorphineAmount[i] < 3 and player:Health() < player:GetMaxHealth() and IsValid(item)) then
+                MorphineAmount[i] = MorphineAmount[i]+1
+                player:PrintMessage(HUD_PRINTTALK, "Morphine Obtained! Current Morphine: " .. MorphineAmount[i])
+            end
+        end
+        return true
     end
     hook.Add("EntityTakeDamage", "ArmorReduceDamage", ArmorReduceDamage)
     hook.Add("EntityTakeDamage", "AdministerMorphine", MorphineShot)
+    hook.Add("PlayerCanPickupItem", "MorphineRefill", MorphineRefill)
 end
