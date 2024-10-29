@@ -76,8 +76,11 @@ if SERVER then
                         ply:EmitSound("weapons/fx/rics/ric3.wav", 35, 110, 1, CHAN_AUTO) 
                     end
 
-                    -- Check if the player has armor, and if it's below the max armor, then add 1 armor point on damage.
-                    if(CurrentArmor > 0 and CurrentArmor < CurrentMaxArmor) then
+                    if(CurrentArmor > 50 and CurrentArmor < CurrentMaxArmor and ply:Health() < ply:GetMaxHealth()) then
+                        ply:SetArmor(CurrentArmor + 1)
+                        ply:SetHealth(ply:Health()+0.5)
+                        ply:EmitSound("player/pl_burnpain1.wav", 35, 130, 1, CHAN_AUTO)
+                    elseif(CurrentArmor > 0 and CurrentArmor < CurrentMaxArmor) then
                         ply:SetArmor(CurrentArmor + 1)
                         ply:EmitSound("player/pl_burnpain1.wav", 35, 130, 1, CHAN_AUTO)
                     end
@@ -89,6 +92,7 @@ if SERVER then
                         ply:ScreenFade(SCREENFADE.IN, Color( 0, 120, 120, 20), 0.5, 0.8)
                         ply:ScreenFade(SCREENFADE.IN, Color( 0, 130, 130, 30), 1.5, 0.1)
                         ply:EmitSound("HL1/fvox/power_restored.wav", 100, 100, 1, CHAN_AUTO)
+                        ply:EmitSound("items/suitchargeok1.wav", 50, 100, 1, CHAN_AUTO)
                         util.Effect("VortDispel", effectdata)
                         timer.Create(i, 0.05, 40, function() if(ply:Armor() < 100)then CurrentArmor = ply:Armor() ply:SetArmor(CurrentArmor + 1) end end)
                         timer.Simple(20, function() SurgeCooldowns[i] = true if(ply:Alive()) then ply:PrintMessage(HUD_PRINTTALK, "Armor surge ready!") end end)
