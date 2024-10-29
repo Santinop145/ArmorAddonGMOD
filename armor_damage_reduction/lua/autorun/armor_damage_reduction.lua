@@ -114,6 +114,7 @@ if SERVER then
                         if(not ply:Alive())then
                             MorphineCooldowns[i] = true
                             MorphineAmount[i] = 3
+                            timer.Remove("TemporaryHealth" .. i)
                         end
                     end)
                 
@@ -149,9 +150,9 @@ if SERVER then
                                     )
                                     end
                                     if(not timer.Exists("TemporaryHealth")) then
-                                        timer.Create("TemporaryHealth", 0.4, 60, function() if(ply:Health() > 0) then ply:SetHealth(ply:Health()-1) else ply:Kill() timer.Remove("TemporaryHealth") MorphineAmount[i] = 3 end end)
+                                        timer.Create("TemporaryHealth" .. i, 0.4, 60, function() if(ply:Health() > 0 and ply:Alive()) then ply:SetHealth(ply:Health()-1) elseif(ply:Alive()) then ply:Kill() timer.Remove("TemporaryHealth") MorphineAmount[i] = 3 end end)
                                     else 
-                                        timer.Adjust("TemporaryHealth", 0.3)
+                                        timer.Adjust("TemporaryHealth" .. i, 0.3)
                                     end
                                 elseif(MorphineAmount[i] > 0) then
                                     ply:EmitSound("hl1/fvox/fuzz.wav", 60, 100, 1, CHAN_AUTO)
