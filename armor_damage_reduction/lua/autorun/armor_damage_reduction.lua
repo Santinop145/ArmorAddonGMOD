@@ -87,6 +87,7 @@ if SERVER then
                         ply:SetArmor(CurrentArmor + 5)
                         SurgeCooldowns[i] = false
                         ply:ScreenFade(SCREENFADE.IN, Color( 0, 120, 120, 20), 0.5, 0.8)
+                        ply:ScreenFade(SCREENFADE.IN, Color( 0, 130, 130, 30), 1.5, 0.1)
                         ply:EmitSound("HL1/fvox/power_restored.wav", 100, 100, 1, CHAN_AUTO)
                         util.Effect("VortDispel", effectdata)
                         timer.Create(i, 0.05, 40, function() if(ply:Armor() < 100)then CurrentArmor = ply:Armor() ply:SetArmor(CurrentArmor + 1) end end)
@@ -129,6 +130,7 @@ if SERVER then
                                     MorphineAmount[i] = MorphineAmount[i] - 1
                                     ply:PrintMessage(HUD_PRINTTALK, "Morphine shot applied! Morphine shots left: " .. MorphineAmount[i])
                                     ply:ScreenFade(SCREENFADE.IN, Color( 120, 255, 120, 128), 0.8, 0.1)
+                                    ply:ScreenFade(SCREENFADE.IN, Color( 40, 180, 40, 20), 5.0, 0.5)
                                     ply:SetHealth(MorphineHealthAmount)
                                     if(ply:Alive())then
                                         timer.Simple(2, function()
@@ -139,18 +141,8 @@ if SERVER then
                                             end
                                         )
                                     end
-                                    if(ply:Alive())then
-                                        timer.Simple(4, function()
-                                            if(ply:Alive())then
-                                            ply:EmitSound("hl1/fvox/blip.wav", 60, 100, 1, CHAN_AUTO)
-                                            ply:ScreenFade(SCREENFADE.IN, Color( 120, 255, 120, 60), 0.2, 0)
-                                            ply:EmitSound("hl1/fvox/medical_repaired.wav", 60, 100, 1, CHAN_AUTO)
-                                            end
-                                        end
-                                    )
-                                    end
                                     if(not timer.Exists("TemporaryHealth")) then
-                                        timer.Create("TemporaryHealth" .. i, 0.4, 60, function() if(ply:Health() > 0 and ply:Alive()) then ply:SetHealth(ply:Health()-1) elseif(ply:Alive()) then ply:Kill() timer.Remove("TemporaryHealth") MorphineAmount[i] = 3 end end)
+                                        timer.Create("TemporaryHealth" .. i, 0.4, 60, function() if(ply:Health() > 0 and ply:Alive()) then ply:SetHealth(ply:Health()-1) elseif(ply:Alive()) then ply:Kill() MorphineAmount[i] = 3 timer.Remove("TemporaryHealth" .. i) end end)
                                     else 
                                         timer.Adjust("TemporaryHealth" .. i, 0.3)
                                     end
