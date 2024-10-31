@@ -1,4 +1,5 @@
 if SERVER then
+    MaxMorphine = CreateConVar("s145_maxmorphine", 3, FCVAR_NOTIFY, "Maximum amount of morphine shots players can carry")
     -- Initializes addon
     timer.Create("AddonStartup", 7, 0, function() 
         -- Gets the data of all connected players
@@ -13,11 +14,12 @@ if SERVER then
         for i=1, game.MaxPlayers() do
             SurgeCooldowns[i] = true
             MorphineCooldowns[i] = true
-            MorphineAmount[i] = 3
+            MorphineAmount[i] = MaxMorphine:GetInt()
         end
-        print("Santinop's addon started!")
+        PrintMessage(HUD_PRINTTALK, "Santinop's addon started!")
         timer.Remove("AddonStartup")
-    end)
+        end
+    )
     -- Define the main function and take ent and dmg from the hook
     local function ArmorReduceDamage(ent, dmg)
     -- Check if targeted entity is a player, then check if it received more than 0 damage.
@@ -52,7 +54,7 @@ if SERVER then
                     
                     -- If chunk to add effects and sounds
                     if(ArmorPercentage > MaxArmorPercentage) then
-                        dmg:ScaleDamage(0.2)
+                        dmg:ScaleDamage(0.15)
                         ply:EmitSound("weapons/crossbow/hit1.wav", 35, 20, 1, CHAN_AUTO) 
                         ply:EmitSound("weapons/crowbar/crowbar_impact1.wav", 20, 40, 1, CHAN_AUTO) 
                         ply:EmitSound("weapons/fx/rics/ric3.wav", 35, 110, 1, CHAN_AUTO) 
@@ -94,8 +96,8 @@ if SERVER then
                         ply:EmitSound("HL1/fvox/power_restored.wav", 100, 100, 1, CHAN_AUTO)
                         ply:EmitSound("items/suitchargeok1.wav", 50, 100, 1, CHAN_AUTO)
                         util.Effect("VortDispel", effectdata)
-                        timer.Create(i, 0.05, 40, function() if(ply:Armor() < 100)then CurrentArmor = ply:Armor() ply:SetArmor(CurrentArmor + 1) end end)
-                        timer.Simple(20, function() SurgeCooldowns[i] = true if(ply:Alive()) then ply:PrintMessage(HUD_PRINTTALK, "Armor surge ready!") end end)
+                        timer.Create("SurgeCooldown" .. i, 0.05, 40, function() if(ply:Armor() < 100)then CurrentArmor = ply:Armor() ply:SetArmor(CurrentArmor + 1) end end)
+                        timer.Simple(20, function() SurgeCooldowns[i] = true if(ply:Alive()) then ply:EmitSound("HL1/fvox/beep.wav", 100, 100, 1, CHAN_AUTO) ply:PrintMessage(HUD_PRINTTALK, "Armor surge ready!") end end)
                     end
                 end
             end
@@ -104,6 +106,7 @@ if SERVER then
     local function MorphineShot(ent, dmg)
         -- Check if targeted entity is a player and if damage is above 10.
         if(ent:IsPlayer() and dmg:GetDamage() > 4 and ent:Alive()) then
+            local maxMorphine = MaxMorphine:GetInt()
             -- Get player table again
             Players = player.GetHumans()
             -- Create a for loop to run the individual code on each player
@@ -118,7 +121,7 @@ if SERVER then
                     timer.Simple(0.5, function()
                         if(not ply:Alive())then
                             MorphineCooldowns[i] = true
-                            MorphineAmount[i] = 3
+                            MorphineAmount[i] = MaxMorphine
                             timer.Remove("TemporaryHealth" .. i)
                         end
                     end)
@@ -128,7 +131,7 @@ if SERVER then
                         ply:EmitSound("HL1/fvox/automedic_on.wav", 60, 100, 1, CHAN_AUTO) 
                         timer.Simple(3.5, function() 
                                 if(ply:Health() ~= ply:GetMaxHealth() and ply:Health() ~= 0 and ply:Alive() and MorphineAmount[i] > 0)then
-                                    MorphineHealthAmount = ply:Health() + 80
+                                    MorphineHealthAmount = ply:Health() + 150 * HealthPercentage
                                     ply:EmitSound("items/medshot4.wav", 80, 100, 1, CHAN_AUTO)
                                     ply:EmitSound("HL1/fvox/morphine_shot.wav", 60, 100, 1, CHAN_AUTO)
                                     MorphineAmount[i] = MorphineAmount[i] - 1
@@ -146,9 +149,14 @@ if SERVER then
                                         )
                                     end
                                     if(not timer.Exists("TemporaryHealth")) then
-                                        timer.Create("TemporaryHealth" .. i, 0.4, 60, function() if(ply:Health() > 0 and ply:Alive()) then ply:SetHealth(ply:Health()-1) elseif(ply:Alive()) then ply:Kill() MorphineAmount[i] = 3 timer.Remove("TemporaryHealth" .. i) end end)
+                                        timer.Create("TemporaryHealth" .. i, 0.3, ply:GetMaxHealth() * HealthPercentage, function() 
+                                            if(ply:Health() > 0 and ply:Alive()) then ply:SetHealth(ply:Health()-1) 
+                                            elseif(ply:Alive()) then ply:Kill() MorphineAmount[i] = maxMorphine timer.Remove("TemporaryHealth" .. i) 
+                                            elseif(not ply:Alive()) then MorphineAmount[i] = maxMorphine timer.Remove("TemporaryHealth" .. i) 
+                                            end 
+                                        end)
                                     else 
-                                        timer.Adjust("TemporaryHealth" .. i, 0.3)
+                                        timer.Adjust("TemporaryHealth" .. i, 0.2, timer.RepsLeft("TemporaryHealth" .. i) + 50)
                                     end
                                 elseif(MorphineAmount[i] > 0) then
                                     ply:EmitSound("hl1/fvox/fuzz.wav", 60, 100, 1, CHAN_AUTO)
@@ -170,15 +178,17 @@ if SERVER then
                             end
                         )
                         MorphineCooldowns[i] = false
-                        timer.Simple(20, function() MorphineCooldowns[i] = true if(MorphineAmount[i] > 0 and ply:Alive()) then ply:PrintMessage(HUD_PRINTTALK, "Morphine shot ready!") end end)
+                        timer.Simple(20, function() MorphineCooldowns[i] = true if(MorphineAmount[i] > 0 and ply:Alive()) then ply:EmitSound("HL1/fvox/beep.wav", 100, 100, 1, CHAN_AUTO) ply:PrintMessage(HUD_PRINTTALK, "Morphine shot ready!") end end)
                     end
                 end
             end
         end
     end
     local function MorphineRefill(player, item)
+        local maxMorphine = MaxMorphine:GetInt()
         for i=1, table.Count(Players) do
-            if(player:Health() < player:GetMaxHealth() and IsValid(item) and item:GetClass() == "item_healthkit" and player == Players[i] and MorphineAmount[i] < 3 or item:GetClass() == "hl1_item_healthkit" and player == Players[i] and MorphineAmount[i] < 3 and player:Health() < player:GetMaxHealth() and IsValid(item)) then
+            if(player:Health() < player:GetMaxHealth() and IsValid(item) and item:GetClass() == "item_healthkit" and player == Players[i] and MorphineAmount[i] < maxMorphine or item:GetClass() == "hl1_item_healthkit" and player == Players[i] and MorphineAmount[i] < maxMorphine and player:Health() < player:GetMaxHealth() and IsValid(item)) then
+                player:EmitSound("hl1/fvox/fuzz.wav", 80, 100, 1, CHAN_AUTO)
                 MorphineAmount[i] = MorphineAmount[i]+1
                 player:PrintMessage(HUD_PRINTTALK, "Morphine Obtained! Current Morphine: " .. MorphineAmount[i])
             end
