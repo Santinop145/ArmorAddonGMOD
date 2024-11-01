@@ -53,7 +53,7 @@ if SERVER then
                     end)
                     
                     -- If chunk to add effects and sounds
-                    if(ArmorPercentage > MaxArmorPercentage) then
+                    if(ArmorPercentage > MaxArmorPercentage or CurrentArmor > 100) then
                         dmg:ScaleDamage(0.15)
                         ply:EmitSound("weapons/crossbow/hit1.wav", 35, 20, 1, CHAN_AUTO) 
                         ply:EmitSound("weapons/crowbar/crowbar_impact1.wav", 20, 40, 1, CHAN_AUTO) 
@@ -72,10 +72,13 @@ if SERVER then
                         util.Effect("ManhackSparks", effectdata)
                         util.Effect("StunstickImpact", effectdata)
                     elseif(ArmorPercentage <= MaxArmorPercentage * 0.3) then
-                        dmg:ScaleDamage(1)
+                        dmg:ScaleDamage(0.9)
                         ply:EmitSound("weapons/crossbow/hit1.wav", 35, 25, 1, CHAN_AUTO) 
                         ply:EmitSound("weapons/crowbar/crowbar_impact1.wav", 20, 45, 1, CHAN_AUTO) 
                         ply:EmitSound("weapons/fx/rics/ric3.wav", 35, 110, 1, CHAN_AUTO) 
+                    elseif(ArmorPercentage <= 0) then
+                        dmg:ScaleDamage(1)
+                        ply:EmitSound("weapons/fx/rics/ric3.wav", 35, 110, 1, CHAN_AUTO)
                     end
 
                     if(CurrentArmor > 50 and CurrentArmor < CurrentMaxArmor and ply:Health() < ply:GetMaxHealth()) then
@@ -96,7 +99,7 @@ if SERVER then
                         ply:EmitSound("HL1/fvox/power_restored.wav", 100, 100, 1, CHAN_AUTO)
                         ply:EmitSound("items/suitchargeok1.wav", 50, 100, 1, CHAN_AUTO)
                         util.Effect("VortDispel", effectdata)
-                        timer.Create("SurgeCooldown" .. i, 0.05, 40, function() if(ply:Armor() < 100)then CurrentArmor = ply:Armor() ply:SetArmor(CurrentArmor + 1) end end)
+                        timer.Create("ArmorSurge" .. i, 0.05, 40, function() if(ply:Armor() < 100)then CurrentArmor = ply:Armor() ply:SetArmor(CurrentArmor + 1) end end)
                         timer.Simple(20, function() SurgeCooldowns[i] = true if(ply:Alive()) then ply:EmitSound("HL1/fvox/beep.wav", 100, 100, 1, CHAN_AUTO) ply:PrintMessage(HUD_PRINTTALK, "Armor surge ready!") end end)
                     end
                 end
@@ -121,7 +124,7 @@ if SERVER then
                     timer.Simple(0.5, function()
                         if(not ply:Alive())then
                             MorphineCooldowns[i] = true
-                            MorphineAmount[i] = MaxMorphine
+                            MorphineAmount[i] = maxMorphine
                             timer.Remove("TemporaryHealth" .. i)
                         end
                     end)
