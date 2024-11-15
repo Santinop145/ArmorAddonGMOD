@@ -219,7 +219,19 @@ if SERVER then
         end
         return true
     end
+    local function ArmorFootstep(ply, pos, foot, sound, volume, rf)
+        if(foot == 0 and ply:Armor() > 0) then
+            ply:EmitSound(("physics/metal/weapon_footstep1.wav", 100, 20, 1, CHAN_AUTO))
+            return false
+        elseif(foot == 1 and ply:Armor() > 0) then
+            ply:EmitSound(("physics/metal/weapon_footstep2.wav", 100, 20, 1, CHAN_AUTO))
+            return false
+        else
+            return false
+        end
+    end
     hook.Add("EntityTakeDamage", "ArmorReduceDamage", ArmorReduceDamage)
     hook.Add("EntityTakeDamage", "AdministerMorphine", MorphineShot)
     hook.Add("PlayerCanPickupItem", "MorphineRefill", MorphineRefill)
+    hook.Add("PlayerFootstep", "ArmorFootstep", ArmorFootstep)
 end
