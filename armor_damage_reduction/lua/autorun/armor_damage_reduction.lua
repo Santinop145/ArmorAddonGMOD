@@ -23,7 +23,7 @@ if SERVER then
     -- Define the main function and take ent and dmg from the hook
     local function ArmorReduceDamage(ent, dmg)
     -- Check if targeted entity is a player, then check if it received more than 0 damage.
-        if(ent:IsPlayer() and dmg:GetDamage() > 0 and ent:Alive()) then
+        if(ent:IsPlayer() and dmg:GetDamage() > 0 and ent:Alive() and not dmg:IsDamageType(DMG_FALL) and not dmg:IsDamageType(DMG_DROWN)) then
             -- Obtains players again (just in case.)
             Players = player.GetHumans()
             -- Creates a for loop to run the individual code on each player
@@ -103,6 +103,27 @@ if SERVER then
                         timer.Simple(20, function() SurgeCooldowns[i] = true if(ply:Alive()) then ply:EmitSound("HL1/fvox/beep.wav", 100, 100, 1, CHAN_AUTO) ply:PrintMessage(HUD_PRINTTALK, "Armor surge ready!") end end)
                     end
                 end
+            end
+        elseif(ent:IsPlayer() and dmg:IsDamageType(DMG_FALL)) then
+            ply = ent
+            if(ply:Armor() > 0 and dmg:GetDamage() < 20) then
+                dmg:ScaleDamage(0)
+                ply:EmitSound("physics/metal/metal_canister_impact_hard3.wav", 40, 90, 1, CHAN_AUTO)
+                ply:EmitSound("physics/metal/metal_sheet_impact_bullet1.wav", 35, 90, 1, CHAN_AUTO)
+                ply:EmitSound("physics/metal/weapon_impact_soft3.wav", 70, 90, 1, CHAN_AUTO)
+                if(ply:Armor() > 4) then
+                    ply:SetArmor(ply:Armor() - 5)
+                end
+            elseif(ply:Armor() > 0 and dmg:GetDamage() > 20) then
+                ply:EmitSound("physics/metal/metal_canister_impact_hard3.wav", 50, 90, 1, CHAN_AUTO)
+                ply:EmitSound("physics/metal/metal_sheet_impact_bullet1.wav", 40, 90, 1, CHAN_AUTO)
+                ply:EmitSound("physics/metal/weapon_impact_hard3.wav", 100, 90, 1, CHAN_AUTO)
+                if(ply:Armor() > 0 and ply:Armor() - dmg:GetDamage()/2 > 0) then
+                    ply:SetArmor(ply:Armor() - dmg:GetDamage()/2)
+                elseif(ply:Armor() > 0 and ply:Armor() - dmg:GetDamage()/2 < 0) then
+                    ply:SetArmor(0)
+                end
+                dmg:ScaleDamage(0.05)
             end
         end
     end
