@@ -221,33 +221,33 @@ if SERVER then
     end
     local function ArmorFootstep(ply, pos, foot, sound, volume, rf)
         local RandomStep = 0
-        if(foot == 0 and ply:Armor() > 0) then
+        if(foot == 0) then
             RandomStep = math.random(0, 1)
-            ply:ViewPunch( Angle(0, -0.5, 0) )
-            if(RandomStep == 0) then
-                ply:ViewPunch( Angle(-1, 0, 0) )
-                ply:EmitSound("physics/metal/weapon_footstep1.wav", 35, 80, 1, CHAN_AUTO)
-                ply:EmitSound("physics/metal/metal_grate_impact_soft1.wav", 30, 120, 1, CHAN_AUTO)
-                return false
-            else
-                ply:ViewPunch( Angle(-1, 0, 0) )
-                ply:EmitSound("physics/metal/weapon_footstep2.wav", 35, 80, 1, CHAN_AUTO)
-                ply:EmitSound("physics/metal/metal_grate_impact_soft3.wav", 30, 120, 1, CHAN_AUTO)
-                return false
+            ply:ViewPunch( Angle(-1, 0.5, 0.5) )
+            if(ply:Armor() > 0) then
+                if(RandomStep == 0) then
+                    ply:EmitSound("physics/metal/weapon_footstep1.wav", 35, 80, 1, CHAN_AUTO)
+                    ply:EmitSound("physics/metal/metal_grate_impact_soft1.wav", 30, 120, 1, CHAN_AUTO)
+                    return false
+                else
+                    ply:EmitSound("physics/metal/weapon_footstep2.wav", 35, 80, 1, CHAN_AUTO)
+                    ply:EmitSound("physics/metal/metal_grate_impact_soft3.wav", 30, 120, 1, CHAN_AUTO)
+                    return false
+                end
             end
-        elseif(foot == 1 and ply:Armor() > 0) then
+        elseif(foot == 1) then
             RandomStep = math.random(0, 1)
-            ply:ViewPunch( Angle(0, 0.5, 0) )
-            if(RandomStep == 0) then
-                ply:ViewPunch( Angle(-1, 0, 0) )
-                ply:EmitSound("physics/metal/weapon_footstep2.wav", 35, 80, 1, CHAN_AUTO)
-                ply:EmitSound("physics/metal/metal_grate_impact_soft3.wav", 30, 120, 1, CHAN_AUTO)
-                return false
-            else
-                ply:ViewPunch( Angle(-1, 0, 0) )
-                ply:EmitSound("physics/metal/weapon_footstep1.wav", 35, 80, 1, CHAN_AUTO)
-                ply:EmitSound("physics/metal/metal_grate_impact_soft1.wav", 30, 120, 1, CHAN_AUTO)
-                return false
+            ply:ViewPunch( Angle(-1, -0.5, -0.5) )
+            if(ply:Armor() > 0) then
+                if(RandomStep == 0) then
+                    ply:EmitSound("physics/metal/weapon_footstep2.wav", 35, 80, 1, CHAN_AUTO)
+                    ply:EmitSound("physics/metal/metal_grate_impact_soft3.wav", 30, 120, 1, CHAN_AUTO)
+                    return false
+                else
+                    ply:EmitSound("physics/metal/weapon_footstep1.wav", 35, 80, 1, CHAN_AUTO)
+                    ply:EmitSound("physics/metal/metal_grate_impact_soft1.wav", 30, 120, 1, CHAN_AUTO)
+                    return false
+                end
             end
         else
             return false
