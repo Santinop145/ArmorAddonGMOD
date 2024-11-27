@@ -1,1 +1,0 @@
-print("Test addon is loaded!")
