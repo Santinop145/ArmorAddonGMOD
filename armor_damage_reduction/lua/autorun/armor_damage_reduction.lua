@@ -36,6 +36,8 @@ if SERVER then
                     effectdata:SetOrigin(ply:GetPos())
                     -- Define the entity to utilize as the player
                     effectdata:SetEntity(ply)
+                    -- Magnitude of the effect
+                    effectdata:SetMagnitude(15)
                     -- Get current armor.
                     local CurrentArmor = ply:Armor()
                     -- Get current max armor.
@@ -53,15 +55,20 @@ if SERVER then
                     end)
                     
                     -- If chunk to add effects and sounds
-                    if(ArmorPercentage > MaxArmorPercentage or CurrentArmor > 100) then
-                        dmg:ScaleDamage(0.15)
-                        ply:EmitSound("weapons/crossbow/hit1.wav", 35, 20, 1, CHAN_AUTO) 
-                        ply:EmitSound("weapons/crowbar/crowbar_impact1.wav", 20, 40, 1, CHAN_AUTO) 
+                    if(ArmorPercentage > MaxArmorPercentage) then
+                        dmg:ScaleDamage(0.05)
+                        ply:EmitSound("weapons/crossbow/hit1.wav", 20, 50, 1, CHAN_AUTO) 
+                        ply:EmitSound("weapons/crowbar/crowbar_impact1.wav", 20, 50, 1, CHAN_AUTO) 
                         ply:EmitSound("weapons/fx/rics/ric3.wav", 35, 110, 1, CHAN_AUTO) 
-                        ply:EmitSound("weapons/stunstick/spark3.wav", 60, 80, 1, CHAN_AUTO) 
+                        ply:EmitSound("weapons/stunstick/spark3.wav", 70, 85, 1, CHAN_AUTO) 
                         ply:EmitSound("weapons/stunstick/stunstick_impact1.wav", 40, 75, 1, CHAN_AUTO) 
                         util.Effect("ManhackSparks", effectdata)
                         util.Effect("StunstickImpact", effectdata)
+                        if(not timer.Exists("TeslaSparks" .. i)) then
+                            timer.Create("TeslaSparks" .. i, 0.1, 15, function() util.Effect("TeslaHitboxes", effectdata) end)
+                        else
+                            timer.Adjust("TeslaSparks" .. i, 0.1, timer.RepsLeft("TeslaSparks" .. i) + 2)
+                        end
                     elseif(ArmorPercentage > MaxArmorPercentage * 0.3) then
                         dmg:ScaleDamage(DamageReduction)
                         ply:EmitSound("weapons/crossbow/hit1.wav", 35, 20, 1, CHAN_AUTO) 
@@ -118,6 +125,11 @@ if SERVER then
                 ply:EmitSound("physics/metal/metal_canister_impact_hard3.wav", 50, 90, 1, CHAN_AUTO)
                 ply:EmitSound("physics/metal/metal_sheet_impact_bullet1.wav", 40, 90, 1, CHAN_AUTO)
                 ply:EmitSound("physics/metal/weapon_impact_hard3.wav", 100, 90, 1, CHAN_AUTO)
+                local effectdata = EffectData()
+                effectdata:SetOrigin(ply:GetPos())
+                effectdata:SetEntity(ply)
+                effectdata:SetScale(500)
+                util.Effect("ThumperDust", effectdata)
                 if(ply:Armor() > 0 and ply:Armor() - dmg:GetDamage()/2 > 0) then
                     ply:SetArmor(ply:Armor() - dmg:GetDamage()/2)
                 elseif(ply:Armor() > 0 and ply:Armor() - dmg:GetDamage()/2 < 0) then
