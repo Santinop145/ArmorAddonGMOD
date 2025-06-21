@@ -18,6 +18,15 @@ function ENT:Use( activator )
         activator.HiTechArmorEquipped = true
         activator.HealthshotReady = true
         activator.HealthregenReady = true
+        activator.ArmorRegenReady = true
+        activator.RegenUpgradeValue = 0
+        activator.DefenseUpgradeValue = 0
+        activator.HealthUpgradeValue = 0
+        activator:SetNWInt("RegenUpgradeValue", activator.RegenUpgradeValue)
+        activator:SetNWInt("DefenseUpgradeValue", activator.DefenseUpgradeValue)
+        activator:SetNWInt("HealthUpgradeValue", activator.HealthUpgradeValue)
+        activator.BoostReady = 6
+        activator.lastJump = 0
         activator.DefaultRunSpeed = activator:GetRunSpeed()
         activator.DefaultWalkSpeed = activator:GetWalkSpeed()
         activator:SetArmor(activator:GetMaxArmor())
